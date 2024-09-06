@@ -13,7 +13,7 @@ import 'express-async-errors';
 const app = express();
 
 dotenv.config({ path: './.env' });
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'xxx';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || 'xxx';
@@ -24,7 +24,7 @@ passport.use(
     {
       clientID: GITHUB_CLIENT_ID,
       clientSecret: GITHUB_CLIENT_SECRET,
-      callbackURL: 'https://github-auth-demo.onrender.com/auth/github/callback',
+      callbackURL: `${BASE_URL}/auth/github/callback`,
     },
     (
       accessToken: string,
