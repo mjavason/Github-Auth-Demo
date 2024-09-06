@@ -1,10 +1,13 @@
-import express, { Request, Response, NextFunction } from 'express';
-import 'express-async-errors';
-import cors from 'cors';
 import axios from 'axios';
+import cors from 'cors';
 import dotenv from 'dotenv';
+import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
+import passport from 'passport';
+import session from 'express-session';
 import { setupSwagger } from './swagger.config';
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import 'express-async-errors';
 
 //#region App Setup
 const app = express();
@@ -12,7 +15,41 @@ const app = express();
 dotenv.config({ path: './.env' });
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'xxx';
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || 'xxx';
 
+// Configure Passport
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: GITHUB_CLIENT_ID,
+      clientSecret: GITHUB_CLIENT_SECRET,
+      callbackURL: 'http://localhost:5000/auth/github/callback',
+    },
+    (
+      accessToken: string,
+      refreshToken: string,
+      profile: any,
+      done: (err: any, user?: any) => void
+    ) => {
+      // Save user info to database or session
+      return done(null, profile);
+    }
+  )
+);
+
+passport.serializeUser((user: any, done: (err: any, id?: any) => void) => {
+  done(null, user);
+});
+
+passport.deserializeUser((id: any, done: (err: any, user?: any) => void) => {
+  done(null, id);
+});
+
+// Middleware
+app.use(session({ secret: 'SECRET', resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
@@ -22,7 +59,30 @@ setupSwagger(app, BASE_URL);
 //#endregion App Setup
 
 //#region Code here
-console.log('Hello world');
+// Routes
+app.get(
+  '/auth/github',
+  passport.authenticate('github', { scope: ['user:email'] })
+);
+
+app.get(
+  '/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/' }),
+  (req: Request, res: Response) => {
+    // Optionally handle authenticated user data
+    return res.send(req.user);
+  }
+);
+
+app.get('/logout', (req: Request, res: Response, next: NextFunction) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect('/');
+  });
+});
+
 //#endregion
 
 //#region Server Setup
