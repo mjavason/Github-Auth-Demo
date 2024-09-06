@@ -59,7 +59,6 @@ setupSwagger(app, BASE_URL);
 //#endregion App Setup
 
 //#region Code here
-// Routes
 app.get(
   '/auth/github',
   passport.authenticate('github', { scope: ['user:email'] })
