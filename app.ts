@@ -24,7 +24,7 @@ passport.use(
     {
       clientID: GITHUB_CLIENT_ID,
       clientSecret: GITHUB_CLIENT_SECRET,
-      callbackURL: 'http://localhost:5000/auth/github/callback',
+      callbackURL: 'https://github-auth-demo.onrender.com/auth/github/callback',
     },
     (
       accessToken: string,
